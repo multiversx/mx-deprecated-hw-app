@@ -1,8 +1,7 @@
 {
-  "name": "hw-app-elrond",
-  "version": "1.0.0",
+  "name": "@elrondnetwork/hw-app-elrond",
+  "version": "0.1.13",
   "description": "",
-  "main": "index.js",
   "scripts": {
     "flow": "flow",
     "build": "bash ./build.sh"
@@ -17,9 +16,17 @@
     "url": "https://github.com/ElrondNetwork/hw-app-elrond/issues"
   },
   "homepage": "https://github.com/ElrondNetwork/hw-app-elrond#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "lib/Elrond.js",
+  "module": "lib-es/Elrond.js",
   "dependencies": {
     "@ledgerhq/hw-transport": "^5.19.1",
-    "bip32-path": "^0.4.2"
+    "@ledgerhq/hw-transport-node-hid": "^5.19.1",
+    "bip32-path": "^0.4.2",
+    "flow-copy-source": "^2.0.9",
+    "flow-typed": "^3.2.1"
   },
   "devDependencies": {
     "@babel/cli": "^7.10.5",
