@@ -82,11 +82,8 @@ export default class Elrond {
     }
 
     if (response.length !== 67 || response[0] !== 64) {
-      console.warn('sig response', response);
       throw new Error("invalid signature receuved from ledger device")
     }
-
-    console.log('res code', response.slice(response.length - 2, response.length).toString('hex'));
 
     return response.slice(1, response.length - 2).toString("hex");
   }
