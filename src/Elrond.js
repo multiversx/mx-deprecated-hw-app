@@ -30,6 +30,7 @@ export default class Elrond {
     const p2 = 0x00;
     const data = Buffer.alloc(8);
 
+    // TODO: Back to BE
     data.writeInt32LE(account, 0);
     data.writeUInt32LE(index, 4);
 
