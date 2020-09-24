@@ -1,7 +1,6 @@
 //@flow
 
 import type Transport from "@ledgerhq/hw-transport";
-import BIPPath from "bip32-path";
 
 export default class Elrond {
   transport: Transport<*>;
@@ -10,7 +9,7 @@ export default class Elrond {
     this.transport = transport;
     transport.decorateAppAPIMethods(
       this,
-      ["getAddress", "signTransaction"],
+      ["getAddress", "signTransaction", "getAppConfiguration"],
       scrambleKey
     );
   }
@@ -34,6 +33,7 @@ export default class Elrond {
     data.writeInt32LE(account, 0);
     data.writeUInt32LE(index, 4);
 
+    console.log(cla, ins, p1, p2, data);
     const response = await this.transport.send(cla, ins, p1, p2, data);
 
     const addressLength = response[0];
@@ -87,5 +87,17 @@ export default class Elrond {
     }
 
     return response.slice(1, response.length - 2).toString("hex");
+  }
+
+  async getAppConfiguration(): Promise<{
+    version: string,
+  }> {
+    const response = await this.transport.send(0xed, 0x02, 0x00, 0x00);
+    return {
+      contractData: response[0],
+      accountIndex: response[1],
+      addressIndex: response[2],
+      version: `${response[3]}.${response[4]}.${response[5]}`
+    }
   }
 }
