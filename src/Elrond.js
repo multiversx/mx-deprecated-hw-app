@@ -29,9 +29,8 @@ export default class Elrond {
     const p2 = 0x00;
     const data = Buffer.alloc(8);
 
-    // TODO: Back to BE
-    data.writeInt32LE(account, 0);
-    data.writeUInt32LE(index, 4);
+    data.writeInt32BE(account, 0);
+    data.writeUInt32BE(index, 4);
 
     console.log(cla, ins, p1, p2, data);
     const response = await this.transport.send(cla, ins, p1, p2, data);
