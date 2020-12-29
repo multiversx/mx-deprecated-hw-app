@@ -47,9 +47,9 @@ export default class Elrond {
   ) {
     const cla = 0xed;
     const ins = 0x05;
-
     const p1 = display ? 0x01 : 0x00;
     const p2 = 0x00;
+    const data = Buffer.alloc(8);
 
     data.writeInt32BE(account, 0);
     data.writeUInt32BE(index, 4);
