@@ -54,7 +54,7 @@ export default class Elrond {
     data.writeInt32BE(account, 0);
     data.writeUInt32BE(index, 4);
 
-    await this.transport.send(cla, ins, p1, p2, data);
+    return await this.transport.send(cla, ins, p1, p2, data);
   }
 
   async signTransaction(
