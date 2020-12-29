@@ -1,6 +1,6 @@
 {
   "name": "@elrondnetwork/hw-app-elrond",
-  "version": "0.1.18",
+  "version": "0.1.19",
   "description": "",
   "scripts": {
     "flow": "flow",
