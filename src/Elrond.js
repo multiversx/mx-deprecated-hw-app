@@ -9,7 +9,7 @@ export default class Elrond {
     this.transport = transport;
     transport.decorateAppAPIMethods(
       this,
-      ["getAddress", "signTransaction", "getAppConfiguration"],
+      ["getAddress", "setAddress", "signTransaction", "getAppConfiguration"],
       scrambleKey
     );
   }
@@ -38,6 +38,23 @@ export default class Elrond {
     const address = response.slice(1, 1 + addressLength).toString("ascii");
 
     return {address};
+  }
+
+  async setAddress(
+    account: number,
+    index: number,
+    display?: boolean,
+  ) {
+    const cla = 0xed;
+    const ins = 0x05;
+    const p1 = display ? 0x01 : 0x00;
+    const p2 = 0x00;
+    const data = Buffer.alloc(8);
+
+    data.writeInt32BE(account, 0);
+    data.writeUInt32BE(index, 4);
+
+    return await this.transport.send(cla, ins, p1, p2, data);
   }
 
   async signTransaction(
