@@ -74,7 +74,7 @@ export default class Elrond {
 
       const apdu = {
         cla: 0xed,
-        ins: 0x04,
+        ins: 0x07,
         p1: isFirst ? 0x00 : 0x80,
         p2: curveMask,
         data: Buffer.alloc(chunkSize),
