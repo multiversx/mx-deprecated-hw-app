@@ -59,7 +59,7 @@ export default class Elrond {
 
     async signTransaction(
         rawTx: Buffer,
-        withHash: boolean,
+        usingHash: boolean,
     ): Promise<string> {
         const curveMask = 0x80;
 
@@ -74,7 +74,7 @@ export default class Elrond {
             const chunkSize = hasMore ? maxChunkSize : rawTx.length - offset;
 
             let insSigningMethod = 0x04;
-            if (withHash) {
+            if (usingHash) {
                 insSigningMethod = 0x07;
             }
 
