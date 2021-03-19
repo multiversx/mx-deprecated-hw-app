@@ -2,6 +2,16 @@
 
 import type Transport from "@ledgerhq/hw-transport";
 
+const SIGN_RAW_TX_INS = 0x04;
+const SIGN_HASH_TX_INS = 0x07;
+const SIGN_MESSAGE_INS = 0x06;
+
+const ACTIVE_SIGNERS = [
+    SIGN_RAW_TX_INS,
+    SIGN_HASH_TX_INS,
+    SIGN_MESSAGE_INS
+];
+
 export default class Elrond {
     transport: Transport<*>;
 
@@ -9,7 +19,7 @@ export default class Elrond {
         this.transport = transport;
         transport.decorateAppAPIMethods(
             this,
-            ["getAddress", "setAddress", "signTransaction", "getAppConfiguration"],
+            ["getAddress", "setAddress", "signTransaction", "signMessage", "getAppConfiguration"],
             scrambleKey
         );
     }
@@ -61,53 +71,12 @@ export default class Elrond {
         rawTx: Buffer,
         usingHash: boolean,
     ): Promise<string> {
-        const curveMask = 0x80;
+        return usingHash ? this.sign(rawTx, SIGN_HASH_TX_INS) :
+          this.sign(rawTx, SIGN_RAW_TX_INS);
+    }
 
-        const apdus = [];
-        let offset = 0;
-
-        while (offset !== rawTx.length) {
-            const isFirst = offset === 0;
-            const maxChunkSize = 150;
-
-            const hasMore = offset + maxChunkSize < rawTx.length;
-            const chunkSize = hasMore ? maxChunkSize : rawTx.length - offset;
-
-            let insSigningMethod = 0x04;
-            if (usingHash) {
-                insSigningMethod = 0x07;
-            }
-
-            const apdu = {
-                cla: 0xed,
-                ins: insSigningMethod,
-                p1: isFirst ? 0x00 : 0x80,
-                p2: curveMask,
-                data: Buffer.alloc(chunkSize),
-            };
-
-            rawTx.copy(apdu.data, 0, offset, offset + chunkSize);
-
-            apdus.push(apdu);
-            offset += chunkSize;
-        }
-
-        let response = Buffer.alloc(0);
-        for (let apdu of apdus) {
-            response = await this.transport.send(
-                apdu.cla,
-                apdu.ins,
-                apdu.p1,
-                apdu.p2,
-                apdu.data
-            );
-        }
-
-        if (response.length !== 67 || response[0] !== 64) {
-            throw new Error("invalid signature received from ledger device")
-        }
-
-        return response.slice(1, response.length - 2).toString("hex");
+    async signMessage(message: Buffer): Promise<string> {
+        return this.sign(message, SIGN_MESSAGE_INS);
     }
 
     async getAppConfiguration(): Promise<{
@@ -120,5 +89,54 @@ export default class Elrond {
             addressIndex: response[2],
             version: `${response[3]}.${response[4]}.${response[5]}`
         }
+    }
+
+    async sign(message: Buffer, type: number): Promise<string> {
+        if ( !ACTIVE_SIGNERS.includes(type) ) {
+            throw new Error(`invalid sign instruction called: ${type}`);
+        }
+
+        const curveMask = 0x80;
+
+        const apdus = [];
+        let offset = 0;
+
+        while (offset !== message.length) {
+            const isFirst = offset === 0;
+            const maxChunkSize = 150;
+
+            const hasMore = offset + maxChunkSize < message.length;
+            const chunkSize = hasMore ? maxChunkSize : message.length - offset;
+
+            const apdu = {
+                cla: 0xed,
+                ins: type,
+                p1: isFirst ? 0x00 : 0x80,
+                p2: curveMask,
+                data: Buffer.alloc(chunkSize),
+            };
+
+            message.copy(apdu.data, 0, offset, offset + chunkSize);
+
+            apdus.push(apdu);
+            offset += chunkSize;
+        }
+
+        let response = Buffer.alloc(0);
+        for (let apdu of apdus) {
+            response = await this.transport.send(
+              apdu.cla,
+              apdu.ins,
+              apdu.p1,
+              apdu.p2,
+              apdu.data
+            );
+        }
+
+        if (response.length !== 67 || response[0] !== 64) {
+            throw new Error("invalid signature received from ledger device")
+        }
+
+        return response.slice(1, response.length - 2).toString("hex");
     }
 }
