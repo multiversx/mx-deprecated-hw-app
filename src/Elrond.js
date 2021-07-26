@@ -96,8 +96,6 @@ export default class Elrond {
             throw new Error(`invalid sign instruction called: ${type}`);
         }
 
-        const curveMask = 0x80;
-
         const apdus = [];
         let offset = 0;
 
@@ -112,7 +110,7 @@ export default class Elrond {
                 cla: 0xed,
                 ins: type,
                 p1: isFirst ? 0x00 : 0x80,
-                p2: curveMask,
+                p2: 0x00,
                 data: Buffer.alloc(chunkSize),
             };
 
