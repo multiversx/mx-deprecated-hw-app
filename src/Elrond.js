@@ -5,11 +5,13 @@ import type Transport from "@ledgerhq/hw-transport";
 const SIGN_RAW_TX_INS = 0x04;
 const SIGN_HASH_TX_INS = 0x07;
 const SIGN_MESSAGE_INS = 0x06;
+const GET_ADDRESS_AUTH_TOKEN_INS = 0x09;
 
 const ACTIVE_SIGNERS = [
     SIGN_RAW_TX_INS,
     SIGN_HASH_TX_INS,
-    SIGN_MESSAGE_INS
+    SIGN_MESSAGE_INS,
+    GET_ADDRESS_AUTH_TOKEN_INS
 ];
 
 export default class Elrond {
@@ -19,7 +21,7 @@ export default class Elrond {
         this.transport = transport;
         transport.decorateAppAPIMethods(
             this,
-            ["getAddress", "setAddress", "signTransaction", "signMessage", "getAppConfiguration"],
+            ["getAddress", "setAddress", "signTransaction", "signMessage", "getAppConfiguration", "getAddressAndSignAuthToken"],
             scrambleKey
         );
     }
@@ -72,11 +74,35 @@ export default class Elrond {
         usingHash: boolean,
     ): Promise<string> {
         return usingHash ? this.sign(rawTx, SIGN_HASH_TX_INS) :
-          this.sign(rawTx, SIGN_RAW_TX_INS);
+            this.sign(rawTx, SIGN_RAW_TX_INS);
     }
 
     async signMessage(message: Buffer): Promise<string> {
         return this.sign(message, SIGN_MESSAGE_INS);
+    }
+
+    async getAddressAndSignAuthToken(
+        account: number,
+        index: number,
+        token: Buffer,
+    ): Promise<{
+        address: string,
+        signature: string,
+    }> {
+        const data = Buffer.alloc(12);
+
+        data.writeInt32BE(account, 0);
+        data.writeUInt32BE(index, 4);
+        data.writeUInt32BE(token.length, 8);
+
+        let buffersArray = [data, token];
+        let result = await this.sign(Buffer.concat(buffersArray), GET_ADDRESS_AUTH_TOKEN_INS);
+
+        let splitRes = result.split("|");
+        return {
+            address: splitRes[0],
+            signature: splitRes[1]
+        }
     }
 
     async getAppConfiguration(): Promise<{
@@ -92,7 +118,7 @@ export default class Elrond {
     }
 
     async sign(message: Buffer, type: number): Promise<string> {
-        if ( !ACTIVE_SIGNERS.includes(type) ) {
+        if (!ACTIVE_SIGNERS.includes(type)) {
             throw new Error(`invalid sign instruction called: ${type}`);
         }
 
@@ -125,12 +151,16 @@ export default class Elrond {
         let response = Buffer.alloc(0);
         for (let apdu of apdus) {
             response = await this.transport.send(
-              apdu.cla,
-              apdu.ins,
-              apdu.p1,
-              apdu.p2,
-              apdu.data
+                apdu.cla,
+                apdu.ins,
+                apdu.p1,
+                apdu.p2,
+                apdu.data
             );
+        }
+
+        if (GET_ADDRESS_AUTH_TOKEN_INS === type) {
+            return this.handleAuthTokenResponse(response);
         }
 
         if (response.length !== 67 || response[0] !== 64) {
@@ -138,5 +168,15 @@ export default class Elrond {
         }
 
         return response.slice(1, response.length - 2).toString("hex");
+    }
+
+    handleAuthTokenResponse(response: Buffer) : Promise<string> {
+        if (response.length !== 129 && response[0] !== 126) {
+            throw new Error("invalid address and token signature received from ledger device")
+        }
+
+        const address = response.slice(1, 63).toString("ascii");
+        const signature = response.slice(63, response.length - 2).toString("hex");
+        return address + "|" + signature;
     }
 }
