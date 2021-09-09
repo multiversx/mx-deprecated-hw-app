@@ -227,14 +227,12 @@ export default class Elrond {
       signature
     );
 
-    const response = await this.transport.send(
+    return await this.transport.send(
       CLA,
       PROVIDE_ESDT_INFO_INS,
       0x00,
       0x00,
       data
     );
-
-    return response;
   }
 }
