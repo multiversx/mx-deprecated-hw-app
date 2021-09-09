@@ -1,7 +1,7 @@
 //@flow
 
 import type Transport from "@ledgerhq/hw-transport";
-
+const CLA = 0xed;
 const SIGN_RAW_TX_INS = 0x04;
 const SIGN_HASH_TX_INS = 0x07;
 const SIGN_MESSAGE_INS = 0x06;
