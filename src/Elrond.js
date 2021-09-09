@@ -36,7 +36,6 @@ export default class Elrond {
         address: string,
         chainCode?: string,
     }> {
-        const cla = 0xed;
         const ins = 0x03;
         const p1 = display ? 0x01 : 0x00;
         const p2 = 0x00;
@@ -45,7 +44,7 @@ export default class Elrond {
         data.writeInt32BE(account, 0);
         data.writeUInt32BE(index, 4);
 
-        const response = await this.transport.send(cla, ins, p1, p2, data);
+        const response = await this.transport.send(CLA, ins, p1, p2, data);
 
         const addressLength = response[0];
         const address = response.slice(1, 1 + addressLength).toString("ascii");
@@ -58,7 +57,6 @@ export default class Elrond {
         index: number,
         display?: boolean,
     ) {
-        const cla = 0xed;
         const ins = 0x05;
         const p1 = display ? 0x01 : 0x00;
         const p2 = 0x00;
@@ -67,7 +65,7 @@ export default class Elrond {
         data.writeInt32BE(account, 0);
         data.writeUInt32BE(index, 4);
 
-        return await this.transport.send(cla, ins, p1, p2, data);
+        return await this.transport.send(CLA, ins, p1, p2, data);
     }
 
     async signTransaction(
@@ -109,7 +107,7 @@ export default class Elrond {
     async getAppConfiguration(): Promise<{
         version: string,
     }> {
-        const response = await this.transport.send(0xed, 0x02, 0x00, 0x00);
+        const response = await this.transport.send(CLA, 0x02, 0x00, 0x00);
         return {
             contractData: response[0],
             accountIndex: response[1],
@@ -134,7 +132,7 @@ export default class Elrond {
             const chunkSize = hasMore ? maxChunkSize : message.length - offset;
 
             const apdu = {
-                cla: 0xed,
+                cla: CLA,
                 ins: type,
                 p1: isFirst ? 0x00 : 0x80,
                 p2: 0x00,
