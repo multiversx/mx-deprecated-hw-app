@@ -22,7 +22,7 @@ export default class Elrond {
         this.transport = transport;
         transport.decorateAppAPIMethods(
             this,
-            ["getAddress", "setAddress", "signTransaction", "signMessage", "getAppConfiguration", "getAddressAndSignAuthToken"],
+            ["getAddress", "setAddress", "signTransaction", "signMessage", "getAppConfiguration", "getAddressAndSignAuthToken", "provideESDTInfo"],
             scrambleKey
         );
     }
