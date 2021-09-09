@@ -5,6 +5,7 @@ import type Transport from "@ledgerhq/hw-transport";
 const SIGN_RAW_TX_INS = 0x04;
 const SIGN_HASH_TX_INS = 0x07;
 const SIGN_MESSAGE_INS = 0x06;
+const PROVIDE_ESDT_INFO_INS = 0x08,
 const GET_ADDRESS_AUTH_TOKEN_INS = 0x09;
 
 const ACTIVE_SIGNERS = [
@@ -177,4 +178,58 @@ export default class Elrond {
         const signature = response.slice(63, response.length - 2).toString("hex");
         return address + "|" + signature;
     }
+
+    serializeESDTInfo(
+        ticker: string,
+        id: string,
+        decimals: number,
+        chainId: string,
+        signature: string
+      ): Buffer {
+        const tickerLengthBuffer = Buffer.from([ticker.length]);
+        const tickerBuffer = Buffer.from(ticker);
+        const idLengthBuffer = Buffer.from([id.length]);
+        const idBuffer = Buffer.from(id);
+        const decimalsBuffer = Buffer.from([decimals]);
+        const chainIdLengthBuffer = Buffer.from([chainId.length]);
+        const chainIdBuffer = Buffer.from(chainId);
+        const signatureBuffer = Buffer.from(signature, "hex");
+        let infoBuffer = [
+          tickerLengthBuffer,
+          tickerBuffer,
+          idLengthBuffer,
+          idBuffer,
+          decimalsBuffer,
+          chainIdLengthBuffer,
+          chainIdBuffer,
+          signatureBuffer,
+        ];
+        return Buffer.concat(infoBuffer);
+      }
+    
+      async provideESDTInfo(
+        ticker: string,
+        id: string,
+        decimals: number,
+        chainId: string,
+        signature: string
+      ): Promise<any> {
+        const data = this.serializeESDTInfo(
+          ticker,
+          id,
+          decimals,
+          chainId,
+          signature
+        );
+    
+        const response = await this.transport.send(
+          CLA,
+          PROVIDE_ESDT_INFO_INS,
+          0x00,
+          0x00,
+          data
+        );
+    
+        return response;
+      }
 }
