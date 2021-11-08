@@ -112,13 +112,27 @@ export default class Elrond {
   async getAppConfiguration(): Promise<{
     version: string,
   }> {
-    const response = await this.transport.send(CLA, 0x02, 0x00, 0x00);
+    /*
+    byte 0 -> is contract data enabled?
+    bytes 1,2 -> unused (kept for compatibility reasons)
+    bytes 3,4,5 -> app version
+    bytes 6,7,8,9 -> account index (big endian)
+    bytes 10,11,12,13 -> address index (big endian)
+    */
+    const response = await this.transport.send(0xed, 0x02, 0x00, 0x00);
     return {
       contractData: response[0],
-      accountIndex: response[1],
-      addressIndex: response[2],
+      accountIndex: this.getIntValueFromBytes(response.slice(6, 10)),
+      addressIndex: this.getIntValueFromBytes(response.slice(10, 14)),
       version: `${response[3]}.${response[4]}.${response[5]}`,
     };
+  }
+
+  getIntValueFromBytes(buffer: Buffer) {
+    return ((buffer[buffer.length - 1]) |
+      (buffer[buffer.length - 2] << 8) |
+      (buffer[buffer.length - 3] << 16) |
+      (buffer[buffer.length - 4] << 24));
   }
 
   async sign(message: Buffer, type: number): Promise<string> {
