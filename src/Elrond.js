@@ -116,14 +116,20 @@ export default class Elrond {
     byte 0 -> is contract data enabled?
     bytes 1,2 -> unused (kept for compatibility reasons)
     bytes 3,4,5 -> app version
-    bytes 6,7,8,9 -> account index (big endian)
-    bytes 10,11,12,13 -> address index (big endian)
+    bytes 6,7,8,9 -> account index (big endian)     -> only for versions >= 1.0.16
+    bytes 10,11,12,13 -> address index (big endian) -> only for versions >= 1.0.16
     */
     const response = await this.transport.send(0xed, 0x02, 0x00, 0x00);
+    let accountIndex = 0;
+    let addressIndex = 0;
+    if(response.length === 14){ // check if the response if from a version newer than 1.0.16
+      accountIndex = this.getIntValueFromBytes(response.slice(6, 10));
+      addressIndex = this.getIntValueFromBytes(response.slice(10, 14));
+    }
     return {
       contractData: response[0],
-      accountIndex: this.getIntValueFromBytes(response.slice(6, 10)),
-      addressIndex: this.getIntValueFromBytes(response.slice(10, 14)),
+      accountIndex: accountIndex,
+      addressIndex: addressIndex,
       version: `${response[3]}.${response[4]}.${response[5]}`,
     };
   }
