@@ -23,7 +23,6 @@
   "module": "lib-es/Elrond.js",
   "dependencies": {
     "@ledgerhq/hw-transport": "^5.19.1",
-    "@ledgerhq/hw-transport-node-hid": "^5.19.1",
     "bip32-path": "^0.4.2",
     "flow-copy-source": "^2.0.9",
     "flow-typed": "^3.2.1"
