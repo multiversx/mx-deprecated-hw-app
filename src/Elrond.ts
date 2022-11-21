@@ -1,6 +1,5 @@
-//@flow
-
 import type Transport from "@ledgerhq/hw-transport";
+
 const CLA = 0xed;
 const SIGN_RAW_TX_INS = 0x04;
 const SIGN_HASH_TX_INS = 0x07;
@@ -16,9 +15,9 @@ const ACTIVE_SIGNERS = [
 ];
 
 export default class Elrond {
-  transport: Transport<*>;
+  transport: Transport;
 
-  constructor(transport: Transport<*>, scrambleKey: string = "eGLD") {
+  constructor(transport: Transport, scrambleKey: string = "eGLD") {
     this.transport = transport;
     transport.decorateAppAPIMethods(
       this,
@@ -39,11 +38,7 @@ export default class Elrond {
     account: number,
     index: number,
     display?: boolean
-  ): Promise<{
-    publicKey: string,
-    address: string,
-    chainCode?: string,
-  }> {
+  ): Promise<{ address: string }> {
     const ins = 0x03;
     const p1 = display ? 0x01 : 0x00;
     const p2 = 0x00;
@@ -87,8 +82,8 @@ export default class Elrond {
     index: number,
     token: Buffer
   ): Promise<{
-    address: string,
-    signature: string,
+    address: string;
+    signature: string;
   }> {
     const data = Buffer.alloc(12);
 
@@ -110,7 +105,10 @@ export default class Elrond {
   }
 
   async getAppConfiguration(): Promise<{
-    version: string,
+    contractData: number;
+    accountIndex: number;
+    addressIndex: number;
+    version: string;
   }> {
     /*
     byte 0 -> is contract data enabled?
@@ -192,7 +190,7 @@ export default class Elrond {
     return response.slice(1, response.length - 2).toString("hex");
   }
 
-  handleAuthTokenResponse(response: Buffer): Promise<string> {
+  async handleAuthTokenResponse(response: Buffer): Promise<string> {
     if (response.length !== 129 && response[0] !== 126) {
       throw new Error(
         "invalid address and token signature received from ledger device"
